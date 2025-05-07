@@ -21,14 +21,14 @@ public class CloudinaryService {
         File fileToUpload = File.createTempFile("sudoku-animal-hub", "");
         image.transferTo(fileToUpload);
 
-        Map uploadResult = cloudinary.uploader().upload(fileToUpload, Collections.emptyMap());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(fileToUpload, Collections.emptyMap());
         return uploadResult.get("secure_url").toString();
     }
 
     private String extractPublicIdFromUrl(String url) {
         String[] parts = url.split("/");
-        String publicId = parts[parts.length - 1].split("\\.")[0]; // extrahiere v1614149342/sample
-        return publicId;
+        return parts[parts.length - 1].split("\\.")[0];
     }
 
     public void deleteImage(String imageUrl) {
