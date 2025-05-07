@@ -3,6 +3,8 @@ package ropold.backend.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ropold.backend.model.PieceImageModel;
@@ -71,5 +73,50 @@ public class PieceImageController {
                 ));
     }
 
+    @PutMapping("/{id}")
+    public PieceImageModel updatePieceImage(
+            @PathVariable String id,
+            @RequestPart("pieceImageModelDto") @Valid PieceImageModelDto pieceImageModelDto,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @AuthenticationPrincipal OAuth2User authentication) throws IOException {
+
+        String authenticatedUserId = authentication.getName();
+        PieceImageModel existingPieceImage = pieceImageService.getPieceImageById(id);
+
+        if (!authenticatedUserId.equals(existingPieceImage.githubId())) {
+            throw new AccessDeniedException("You do not have permission to update this piece image.");
+        }
+
+        String newImageUrl;
+        if (image != null && !image.isEmpty()) {
+            newImageUrl = cloudinaryService.uploadImage(image);
+        } else {
+            newImageUrl = existingPieceImage.imageUrl();
+        }
+
+        return pieceImageService.updatePieceImage(
+                id,
+                new PieceImageModel(
+                        id,
+                        pieceImageModelDto.name(),
+                        pieceImageModelDto.pieceImageEnum(),
+                        pieceImageModelDto.description(),
+                        pieceImageModelDto.isActive(),
+                        pieceImageModelDto.githubId(),
+                        newImageUrl
+                ));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePieceImage(@PathVariable String id, @AuthenticationPrincipal OAuth2User authentication) {
+        String authenticatedUserId = authentication.getName();
+
+        PieceImageModel pieceImageModel = pieceImageService.getPieceImageById(id);
+        if (!authenticatedUserId.equals(pieceImageModel.githubId())) {
+            throw new AccessDeniedException("You do not have permission to delete this piece image.");
+        }
+        pieceImageService.deletePieceImage(id);
+    }
 
 }
