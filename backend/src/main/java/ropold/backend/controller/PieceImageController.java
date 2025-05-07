@@ -7,13 +7,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ropold.backend.exception.PieceImageNotFoundException;
 import ropold.backend.model.PieceImageModel;
 import ropold.backend.model.PieceImageModelDto;
 import ropold.backend.service.CloudinaryService;
 import ropold.backend.service.PieceImageService;
 
 import java.io.IOException;
-import java.nio.file.AccessDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -35,7 +36,7 @@ public class PieceImageController {
     }
 
     @GetMapping("/{id}")
-    public PieceImageModel getPieceImageById(String id) {
+    public PieceImageModel getPieceImageById(@PathVariable String id) {
         PieceImageModel pieceImage = pieceImageService.getPieceImageById(id);
         if (pieceImage == null) {
             throw new PieceImageNotFoundException("No PieceImage found with id: " + id);
@@ -47,12 +48,12 @@ public class PieceImageController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping()
     public PieceImageModel addPieceImage(
-            @RequestPart("pieceImageModelDto") @Valid PieceImageModelDto animalModelDto,
+            @RequestPart("pieceImageModelDto") @Valid PieceImageModelDto pieceImageModelDto,
             @RequestPart(value = "image", required = false) MultipartFile image,
             @AuthenticationPrincipal OAuth2User authentication) throws IOException {
 
         String authenticatedUserId = authentication.getName();
-        if (!authenticatedUserId.equals(animalModelDto.githubId())) {
+        if (!authenticatedUserId.equals(pieceImageModelDto.githubId())) {
             throw new AccessDeniedException("You do not have permission to add this animal.");
         }
 
@@ -113,7 +114,7 @@ public class PieceImageController {
         String authenticatedUserId = authentication.getName();
 
         PieceImageModel pieceImageModel = pieceImageService.getPieceImageById(id);
-        if (!authenticatedUserId.equals(pieceImageModel.githubId())) {
+        if (!pieceImageModel.githubId().equals(authenticatedUserId)) {
             throw new AccessDeniedException("You do not have permission to delete this piece image.");
         }
         pieceImageService.deletePieceImage(id);
