@@ -28,7 +28,7 @@ public class PieceImageService {
     }
 
     public PieceImageModel getPieceImageById(String id) {
-        return pieceImageRepository.findById(id).orElseThrow(() -> new PieceImageNotFoundException("No PieceImage found with id: " + id));
+        return pieceImageRepository.findById(id).orElseThrow(() -> new PieceImageNotFoundException("No Piece Image found with id: " + id));
     }
 
     public PieceImageModel addPieceImage(PieceImageModel pieceImageModel) {
@@ -68,5 +68,30 @@ public class PieceImageService {
         }
 
         pieceImageRepository.deleteById(id);
+    }
+
+    public List<PieceImageModel> getPieceImagesByIds(List<String> favoritePieceImageIds) {
+        return pieceImageRepository.findAllById(favoritePieceImageIds);
+    }
+
+    public PieceImageModel togglePieceImageActive(String id) {
+        PieceImageModel pieceImageModel = pieceImageRepository.findById(id).orElseThrow(() -> new PieceImageNotFoundException("No PieceImage found with id: " + id));
+
+        PieceImageModel updatedPieceImageModel = new PieceImageModel(
+                pieceImageModel.id(),
+                pieceImageModel.name(),
+                pieceImageModel.pieceImageEnum(),
+                pieceImageModel.description(),
+                !pieceImageModel.isActive(),
+                pieceImageModel.githubId(),
+                pieceImageModel.imageUrl()
+        );
+        return pieceImageRepository.save(updatedPieceImageModel);
+    }
+
+    public List<PieceImageModel> getPieceImagesForGithubUser(String githubId) {
+        return pieceImageRepository.findAll().stream()
+                .filter(pieceImageModel -> pieceImageModel.githubId().equals(githubId))
+                .toList();
     }
 }

@@ -72,6 +72,12 @@ public class UserController {
         return pieceImageService.togglePieceImageActive(id);
     }
 
+    @GetMapping("/custom-piece-image")
+    public Map<PieceImageEnum, String> getCustomPieceImages(@AuthenticationPrincipal OAuth2User authentication) {
+        String authenticatedUserId = authentication.getName();
+        return appUserService.getCustomPieceImages(authenticatedUserId);
+    }
+
     @PostMapping("/custom-piece-image")
     @ResponseStatus(HttpStatus.CREATED)
     public void saveCustomPieceImage(@RequestBody Map<PieceImageEnum,String> customPieceImages, @AuthenticationPrincipal OAuth2User authentication) {
